@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>MD Blog</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    Oxygen, Ubuntu, Cantarell, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                background: #f5f5f5;
+            }
+
+            .container {
+                max-width: 900px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+
+            header {
+                background: white;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                margin-bottom: 30px;
+            }
+
+            h1 {
+                color: #2c3e50;
+                margin-bottom: 10px;
+            }
+
+            .subtitle {
+                color: #7f8c8d;
+            }
+
+            .back-btn {
+                display: inline-block;
+                padding: 10px 20px;
+                background: #3498db;
+                color: white;
+                text-decoration: none;
+                border-radius: 5px;
+                margin-bottom: 20px;
+                cursor: pointer;
+                border: none;
+                font-size: 16px;
+            }
+
+            .back-btn:hover {
+                background: #2980b9;
+            }
+
+            .post-list {
+                background: white;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .post-item {
+                padding: 15px;
+                margin-bottom: 10px;
+                border-left: 4px solid #3498db;
+                background: #f8f9fa;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .post-item:hover {
+                background: #e9ecef;
+                transform: translateX(5px);
+            }
+
+            .post-title {
+                font-size: 1.3em;
+                color: #2c3e50;
+                margin-bottom: 5px;
+            }
+
+            .post-description {
+                font-size: 0.9em;
+                color: #7f8c8d;
+            }
+
+            .post-content {
+                background: white;
+                padding: 40px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .post-content h1,
+            .post-content h2,
+            .post-content h3 {
+                margin-top: 1.5em;
+                margin-bottom: 0.5em;
+                color: #2c3e50;
+            }
+
+            .post-content h1 {
+                font-size: 2em;
+            }
+            .post-content h2 {
+                font-size: 1.5em;
+            }
+            .post-content h3 {
+                font-size: 1.2em;
+            }
+
+            .post-content p {
+                margin-bottom: 1em;
+            }
+
+            .post-content code {
+                background: #f4f4f4;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-family: "Courier New", monospace;
+            }
+
+            .post-content pre {
+                background: #f4f4f4;
+                padding: 15px;
+                border-radius: 5px;
+                overflow-x: auto;
+                margin: 1em 0;
+            }
+
+            .post-content pre code {
+                padding: 0;
+            }
+
+            .post-content blockquote {
+                border-left: 4px solid #3498db;
+                padding-left: 20px;
+                margin: 1em 0;
+                color: #555;
+            }
+
+            .post-content ul,
+            .post-content ol {
+                margin-left: 30px;
+                margin-bottom: 1em;
+            }
+
+            .post-content a {
+                color: #3498db;
+                text-decoration: none;
+            }
+
+            .post-content a:hover {
+                text-decoration: underline;
+            }
+
+            .post-content img {
+                max-width: 100%;
+                height: auto;
+                border-radius: 5px;
+            }
+
+            .error {
+                background: #fee;
+                color: #c33;
+                padding: 20px;
+                border-radius: 8px;
+                margin-top: 20px;
+            }
+
+            .hidden {
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>MD Blog</h1>
+                <p class="subtitle">A Markdown Blog</p>
+            </header>
+
+            <div id="listView">
+                <div class="post-list">
+                    <h2>Blog Posts</h2>
+                    <div id="postList"></div>
+                </div>
+            </div>
+
+            <div id="postView" class="hidden">
+                <button class="back-btn" onclick="showList()">
+                    &larr; Back to Posts
+                </button>
+                <div class="post-content" id="postContent"></div>
+            </div>
+
+            <div id="errorMsg" class="error hidden"></div>
+        </div>
+
+        <script>
+            async function loadPostList() {
+                const postList = document.getElementById("postList");
+                postList.innerHTML = "<p>Loading posts...</p>";
+
+                try {
+                    const response = await fetch("posts.json");
+
+                    if (!response.ok) {
+                        throw new Error("posts.json not found");
+                    }
+
+                    const data = await response.json();
+
+                    if (!data.posts || data.posts.length === 0) {
+                        postList.innerHTML =
+                            "<p>No posts found. Add posts to posts.json</p>";
+                        return;
+                    }
+
+                    postList.innerHTML = "";
+
+                    for (const post of data.posts) {
+                        const postItem = document.createElement("div");
+                        postItem.className = "post-item";
+                        postItem.onclick = () => loadPost(post.file);
+
+                        const title = document.createElement("div");
+                        title.className = "post-title";
+                        title.textContent =
+                            post.title ||
+                            post.file
+                                .replace(".md", "")
+                                .replace(/-/g, " ")
+                                .replace(/_/g, " ");
+
+                        postItem.appendChild(title);
+
+                        if (post.description) {
+                            const desc = document.createElement("div");
+                            desc.className = "post-description";
+                            desc.textContent = post.description;
+                            postItem.appendChild(desc);
+                        }
+
+                        postList.appendChild(postItem);
+                    }
+                } catch (err) {
+                    postList.innerHTML = "";
+                    showError(
+                        `Error loading posts.json: ${err.message}. Make sure posts.json exists in the same directory.`,
+                    );
+                }
+            }
+
+            async function loadPost(filename) {
+                try {
+                    const response = await fetch(filename);
+
+                    if (!response.ok) {
+                        throw new Error(`File not found: ${filename}`);
+                    }
+
+                    const data = await response.text();
+                    const html = marked.parse(data);
+
+                    document.getElementById("postContent").innerHTML = html;
+                    document.getElementById("listView").classList.add("hidden");
+                    document
+                        .getElementById("postView")
+                        .classList.remove("hidden");
+                    document.getElementById("errorMsg").classList.add("hidden");
+                } catch (err) {
+                    showError(`Error loading ${filename}: ${err.message}`);
+                }
+            }
+
+            function showList() {
+                document.getElementById("listView").classList.remove("hidden");
+                document.getElementById("postView").classList.add("hidden");
+                document.getElementById("errorMsg").classList.add("hidden");
+            }
+
+            function showError(msg) {
+                const errorEl = document.getElementById("errorMsg");
+                errorEl.textContent = msg;
+                errorEl.classList.remove("hidden");
+            }
+
+            loadPostList();
+        </script>
+    </body>
+</html>

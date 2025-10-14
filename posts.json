@@ -1,0 +1,21 @@
+{
+  "posts": [
+    {
+      "file": "SK1-Home.md",
+      "title": "Home",
+      "description": "Welcome to the blog"
+    },
+    {
+      "file": "SK1-conditions.md",
+      "title": "Conditions"
+    },
+    {
+      "file": "SK1-areas.md",
+      "title": "Areas"
+    },
+    {
+      "file": "SK1-about.md",
+      "title": "About"
+    }
+  ]
+}
