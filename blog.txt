@@ -1,2 +1,2 @@
-My MD Text Blog
-A simple, text-configured Markdown blog.
+MD Blog
+A Markdown Blog.

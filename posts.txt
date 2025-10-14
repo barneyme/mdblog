@@ -1,5 +1,5 @@
-Filename | Title | Description
-Use a pipe | to separate fields. Lines starting with # are comments.
+# Filename | Title | Description
+# Use a pipe | to separate fields. Lines starting with # are comments.
 SK1-Home.md | Welcome Home | The first post on the blog.
 SK1-conditions.md | Health Conditions | Discussion on common conditions.
 SK1-areas.md | Focus Areas | What we are working on.
