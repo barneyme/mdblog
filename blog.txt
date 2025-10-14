@@ -1,0 +1,2 @@
+My MD Text Blog
+A simple, text-configured Markdown blog.

@@ -3,6 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <!-- Title will be set dynamically by loadBlogConfig() -->
         <title>MD Blog</title>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
         <style>
@@ -185,6 +186,7 @@
     <body>
         <div class="container">
             <header>
+                <!-- These will be updated by JavaScript from blog.txt -->
                 <h1>MD Blog</h1>
                 <p class="subtitle">A Markdown Blog</p>
             </header>
@@ -207,40 +209,95 @@
         </div>
 
         <script>
+            // Function to load the blog title and subtitle from blog.txt
+            async function loadBlogConfig() {
+                try {
+                    const response = await fetch("blog.txt");
+                    if (!response.ok) {
+                        console.warn(
+                            "blog.txt not found, using default title/subtitle.",
+                        );
+                        return;
+                    }
+
+                    const data = await response.text();
+                    // Split the file content by newline to get the title (line 1) and subtitle (line 2)
+                    const lines = data.trim().split("\n");
+                    const title = lines[0] || "MD Blog";
+                    const subtitle = lines[1] || "A Markdown Blog";
+
+                    // Update HTML elements
+                    document.title = title;
+                    document.querySelector("header h1").textContent = title;
+                    document.querySelector("header .subtitle").textContent =
+                        subtitle;
+                } catch (err) {
+                    console.error("Error loading blog.txt:", err);
+                }
+            }
+
+            // Function to load the list of posts from posts.txt
             async function loadPostList() {
                 const postList = document.getElementById("postList");
                 postList.innerHTML = "<p>Loading posts...</p>";
 
                 try {
-                    const response = await fetch("posts.json");
+                    // Fetch the posts list from the new text file
+                    const response = await fetch("posts.txt");
 
                     if (!response.ok) {
-                        throw new Error("posts.json not found");
+                        throw new Error("posts.txt not found");
                     }
 
-                    const data = await response.json();
+                    const rawData = await response.text();
+                    const lines = rawData.trim().split("\n");
+                    let posts = [];
 
-                    if (!data.posts || data.posts.length === 0) {
+                    // Parse the posts.txt file. Format is expected to be:
+                    // filename | title | description
+                    for (const line of lines) {
+                        const trimmedLine = line.trim();
+                        // Skip empty lines and lines starting with '#' (for comments)
+                        if (!trimmedLine || trimmedLine.startsWith("#")) {
+                            continue;
+                        }
+                        // Split by pipe '|' and trim whitespace
+                        const parts = trimmedLine
+                            .split("|")
+                            .map((p) => p.trim());
+
+                        if (parts.length >= 1 && parts[0]) {
+                            // Extract data, using the filename as a fallback for the title
+                            posts.push({
+                                file: parts[0],
+                                title:
+                                    parts[1] ||
+                                    parts[0]
+                                        .replace(".md", "")
+                                        .replace(/-/g, " ")
+                                        .replace(/_/g, " "),
+                                description: parts[2] || "",
+                            });
+                        }
+                    }
+
+                    if (posts.length === 0) {
                         postList.innerHTML =
-                            "<p>No posts found. Add posts to posts.json</p>";
+                            "<p>No posts found. Add posts to posts.txt in 'filename | title | description' format.</p>";
                         return;
                     }
 
                     postList.innerHTML = "";
 
-                    for (const post of data.posts) {
+                    // Dynamically create the list of post items
+                    for (const post of posts) {
                         const postItem = document.createElement("div");
                         postItem.className = "post-item";
                         postItem.onclick = () => loadPost(post.file);
 
                         const title = document.createElement("div");
                         title.className = "post-title";
-                        title.textContent =
-                            post.title ||
-                            post.file
-                                .replace(".md", "")
-                                .replace(/-/g, " ")
-                                .replace(/_/g, " ");
+                        title.textContent = post.title;
 
                         postItem.appendChild(title);
 
@@ -256,7 +313,7 @@
                 } catch (err) {
                     postList.innerHTML = "";
                     showError(
-                        `Error loading posts.json: ${err.message}. Make sure posts.json exists in the same directory.`,
+                        `Error loading posts.txt: ${err.message}. Make sure posts.txt exists in the same directory and follows the 'filename | title | description' format.`,
                     );
                 }
             }
@@ -295,7 +352,11 @@
                 errorEl.classList.remove("hidden");
             }
 
-            loadPostList();
+            // Initialize function to load config and then posts
+            (async function init() {
+                await loadBlogConfig();
+                await loadPostList();
+            })();
         </script>
     </body>
 </html>
