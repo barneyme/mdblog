@@ -31,7 +31,7 @@ Line 1
 
 My MD Text Blog
 
-The main <h1> title of the blog.
+The main < h1 > title of the blog.
 
 Line 2
 
