@@ -1,6 +1,4 @@
 # Filename | Title | Description
 # Use a pipe | to separate fields. Lines starting with # are comments.
-SK1-Home.md | Welcome Home | The first post on the blog.
-SK1-conditions.md | Health Conditions | Discussion on common conditions.
-SK1-areas.md | Focus Areas | What we are working on.
-SK1-about.md | About Us | Learn more about the author.
+welcome.md | Welcome | Welcome to MD Blog.
+readme.md | Read Me | How to use MD Blog.
