@@ -1,7 +1,9 @@
 # MD Blog
+
 This is a single-file, client-side blog application designed to display blog posts written in Markdown. It uses plain HTML, CSS, and JavaScript, relying on the blog.txt and posts.txt files for configuration, making it incredibly easy to manage without editing any code.
 
 ## How to Run
+
 Ensure you have the following files in the same directory:
 
 index.html (The main application file)
@@ -13,6 +15,7 @@ posts.txt (For the list of posts)
 Open index.html directly in any modern web browser (Chrome, Firefox, Edge, etc.).
 
 ## How to Configure Your Blog
+
 All configuration is done via two simple text files.
 
 1. Setting the Header (blog.txt)
