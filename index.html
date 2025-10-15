@@ -5,6 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <!-- Title will be set dynamically by loadBlogConfig() -->
         <title>MD Blog</title>
+        <!-- Re-including marked for post rendering -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
         <style>
             * {
                 margin: 0;
@@ -49,11 +51,11 @@
                 padding: 10px 20px;
                 background: #3498db;
                 color: white;
-                text-decoration: none;
-                border-radius: 5px;
-                margin-bottom: 20px;
-                cursor: pointer;
                 border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                transition: background 0.3s;
+                margin-bottom: 20px;
                 font-size: 16px;
             }
 
@@ -61,308 +63,278 @@
                 background: #2980b9;
             }
 
-            .post-list {
+            .section-title {
+                color: #2c3e50;
+                margin-bottom: 15px;
+                border-bottom: 2px solid #ddd;
+                padding-bottom: 8px;
+            }
+
+            .posts-list {
+                list-style: none;
+                padding: 0;
+            }
+
+            .post-item,
+            .post-item-empty {
+                background: white;
+                margin-bottom: 15px;
+                border-radius: 8px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+                transition: box-shadow 0.3s;
+            }
+
+            .post-item:hover {
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+
+            .post-item-empty {
+                padding: 20px;
+                color: #e74c3c;
+                font-style: italic;
+                text-align: center;
+                border: 1px solid #f9caca;
+                background: #fdf6f6;
+            }
+
+            .post-button {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                padding: 20px;
+                text-align: left;
+                background: none;
+                border: none;
+                cursor: pointer;
+            }
+
+            .post-title {
+                font-size: 1.25em;
+                font-weight: bold;
+                color: #3498db;
+                margin-bottom: 5px;
+            }
+
+            .post-description {
+                color: #7f8c8d;
+                font-size: 0.9em;
+            }
+
+            .arrow-icon {
+                position: absolute;
+                right: 20px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #bdc3c7;
+            }
+
+            .post-item button {
+                position: relative;
+            }
+
+            .post-content {
                 background: white;
                 padding: 30px;
                 border-radius: 8px;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             }
 
-            .post-item {
-                padding: 15px;
-                margin-bottom: 10px;
-                border-left: 4px solid #3498db;
-                background: #f8f9fa;
-                cursor: pointer;
-                transition: all 0.3s ease;
-            }
-
-            .post-item:hover {
-                background: #e9ecef;
-                transform: translateX(5px);
-            }
-
-            .post-title {
-                font-size: 1.3em;
-                color: #2c3e50;
-                margin-bottom: 5px;
-            }
-
-            .post-description {
-                font-size: 0.9em;
-                color: #7f8c8d;
-            }
-
-            .post-content {
-                background: white;
-                padding: 40px;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            }
-
-            .post-content h1,
-            .post-content h2,
-            .post-content h3 {
-                margin-top: 1.5em;
-                margin-bottom: 0.5em;
-                color: #2c3e50;
-            }
-
-            .post-content h1 {
-                font-size: 2em;
-            }
-            .post-content h2 {
-                font-size: 1.5em;
-            }
-            .post-content h3 {
-                font-size: 1.2em;
-            }
-
-            .post-content p {
-                margin-bottom: 1em;
-            }
-
-            .post-content code {
-                background: #f4f4f4;
-                padding: 2px 6px;
-                border-radius: 3px;
-                font-family: "Courier New", monospace;
-            }
-
-            .post-content pre {
-                background: #f4f4f4;
-                padding: 15px;
-                border-radius: 5px;
-                overflow-x: auto;
-                margin: 1em 0;
-            }
-
-            .post-content pre code {
-                padding: 0;
-            }
-
-            .post-content blockquote {
-                border-left: 4px solid #3498db;
-                padding-left: 20px;
-                margin: 1em 0;
-                color: #555;
-            }
-
-            .post-content ul,
-            .post-content ol {
-                margin-left: 30px;
-                margin-bottom: 1em;
-            }
-
-            .post-content a {
-                color: #3498db;
-                text-decoration: none;
-            }
-
-            .post-content a:hover {
-                text-decoration: underline;
-            }
-
-            .post-content img {
-                max-width: 100%;
-                height: auto;
-                border-radius: 5px;
-            }
-
             .error {
-                background: #fee;
-                color: #c33;
-                padding: 20px;
-                border-radius: 8px;
-                margin-top: 20px;
+                background: #e74c3c;
+                color: white;
+                padding: 15px;
+                border-radius: 6px;
+                margin-bottom: 20px;
+                text-align: center;
+                font-weight: bold;
             }
 
             .hidden {
-                display: none;
+                display: none !important;
+            }
+
+            /* Markdown Styling (optional, to make post content look nice) */
+            .post-content h2 {
+                color: #2c3e50;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 5px;
+                margin-top: 20px;
+                margin-bottom: 10px;
+            }
+
+            .post-content p {
+                margin-bottom: 15px;
             }
         </style>
     </head>
     <body>
         <div class="container">
             <header>
-                <!-- These will be updated by JavaScript from blog.txt -->
-                <h1>MD Blog</h1>
-                <p class="subtitle">A Markdown Blog</p>
+                <h1 id="blogTitle">MD Blog</h1>
+                <p id="blogSubtitle" class="subtitle">
+                    A simple markdown blog.
+                </p>
             </header>
 
+            <!-- Error Message Area -->
+            <div id="errorMsg" class="error hidden"></div>
+
+            <!-- List View -->
             <div id="listView">
-                <div class="post-list">
-                    <h2>Blog Posts</h2>
-                    <div id="postList"></div>
+                <h2 class="section-title">Latest Posts</h2>
+                <ul id="postsList" class="posts-list">
+                    <!-- Posts will be injected here by JavaScript -->
+                </ul>
+            </div>
+
+            <!-- Post View -->
+            <div id="postView" class="hidden">
+                <button onclick="showList()" class="back-btn">
+                    &larr; Back to List
+                </button>
+                <div id="postContent" class="post-content">
+                    <!-- Post Markdown will be converted to HTML and injected here -->
                 </div>
             </div>
-
-            <div id="postView" class="hidden">
-                <button class="back-btn" onclick="showList()">
-                    &larr; Back to Posts
-                </button>
-                <div class="post-content" id="postContent"></div>
-            </div>
-
-            <div id="errorMsg" class="error hidden"></div>
         </div>
 
         <script>
-            /**
-             * marked v4.3.0 - a markdown parser
-             * Copyright (c) 2011-2023, Christopher Jeffrey. (MIT Licensed)
-             * https://github.com/markedjs/marked
-             */
-            !function(e,t){"object"==typeof exports&&"undefined"!=typeof module?t(exports):"function"==typeof define&&define.amd?define(["exports"],t):t((e="undefined"!=typeof globalThis?globalThis:e||self).marked={})}(this,function(r){"use strict";function i(e,t){for(var u=0;u<t.length;u++){var n=t[u];n.enumerable=n.enumerable||!1,n.configurable=!0,"value"in n&&(n.writable=!0),Object.defineProperty(e,function(e){e=function(e,t){if("object"!=typeof e||null===e)return e;var u=e[Symbol.toPrimitive];if(void 0===u)return("string"===t?String:Number)(e);u=u.call(e,t||"default");if("object"!=typeof u)return u;throw new TypeError("@@toPrimitive must return a primitive value.")}(e,"string");return"symbol"==typeof e?e:String(e)}(n.key),n)}}function F(){return(F=Object.assign?Object.assign.bind():function(e){for(var t=1;t<arguments.length;t++){var u,n=arguments[t];for(u in n)Object.prototype.hasOwnProperty.call(n,u)&&(e[u]=n[u])}return e}).apply(this,arguments)}function D(e){return(D=Symbol.iterator?Array.from.bind(Array):function(e){for(var t=0,u=new Array(e.length);t<e.length;t++)u[t]=e[t];return u})(e)}function L(t,e){return t(e=I.defaults.sanitize?I.defaults.sanitizer?I.defaults.sanitizer(e):L.sanitize(e):e)}function j(e,t){if(t.source||t.test){if(!t.source.includes("(?<="))throw new Error("lookbehinds are not supported on this JS platform.");return new RegExp(t.source,e)}return t}function N(e,t){if(t.data&&t.data.className){var u=t.data.className.split(" ").filter(Boolean).join(" ");e.class="".concat(e.class?e.class+" ":"").concat(u)}return e}function O(e,t,u,n){var r={block:e.block.exec(t),inline:e.inline.exec(u),text:e.text.exec(n)};return r.block?r.block:r.inline?r.inline:r.text}function $(e,t){var u,n=Object.create(e.prototype);for(u in t)e.prototype.hasOwnProperty(u)||(n[u]=t[u]);return n}function B(e,t){if(t&&t.length){for(var u,n=0;n<t.length;n++)if(u=e.match(t[n].regex))return{src:u[0],_stack:t[n].rule};return null}return null}function G(e){var t={};for(var u in e)t[u]=e[u];return t}function H(e){var t=j("g",e.start),u=j("g",e.end);return function(e,n){for(var r,i,s,l=e.indexOf(n.start,r||0);-1!==(s=e.indexOf(n.end,l+(r=r||0)))?r=s+n.end.length:(r=l+n.start.length,s=-1);)if(r!==s){var o=e.substring(l+n.start.length,s),a=n.tokenizer?n.tokenizer(o,n):o;if(a){for(var c=l;c<r;)e=e.slice(0,c)+n.placeholder+(e.slice(c+n.placeholder.length)||"\0"),c=l+n.placeholder.length;return{before:e.slice(0,l),after:e.slice(r),placeholder:n.placeholder,text:a}}}}}(function(e){function t(e){this.tokens=[],this.tokens.links={},this.options=F({},t.defaults,e),this.options.context={}}t.defaults={};var u={};t.prototype.lex=function(e){return e=e.replace(/\r\n|\r/g,"\n").replace(/\t/g,"    "),this.text=e,this.tokens.push({type:"space"}),this.options.pedantic?this.lexPedantic():this.lex(this.text)};t.prototype.lexPedantic=function(){var e,t,u,n;for(e=this.text;e;){if(u=B(e,this.rules.block.normal)){switch(u.type){case"newline":e=e.substring(u.src.length);continue;case"hr":this.tokens.push({type:"hr"});e=e.substring(u.src.length);continue;case"heading":this.tokens.push({type:"heading",depth:u[1].length,text:u[2]});e=e.substring(u.src.length);continue;case"lheading":this.tokens.push({type:"heading",depth:1==u[2].charAt(0)?1:2,text:u[1]});e=e.substring(u.src.length);continue;case"blockquote":e=e.substring(u.src.length);this.tokens.push({type:"blockquoteStart"});u[1]=u[1].replace(/^ {0,3}> ?/gm,""),this.lex(u[1]);this.tokens.push({type:"blockquoteEnd"});continue;case"list":e=e.substring(u.src.length);t=u[2],u[2]=u[2].replace(/\n$/,""),this.tokens.push({type:"listStart",ordered:1==u[2].match(/^(\d+)\./)[1]?0:1});t.replace(/^ {0,3}(\d+)\. +([^\n]*(?:\n(?!\1\.)[^\n]*)*)/gm,function(e,t,u){this.tokens.push({type:"listitemStart"}),this.lex(u),this.tokens.push({type:"listitemEnd"})}.bind(this));this.tokens.push({type:"listEnd"});continue;case"html":e=e.substring(u.src.length);this.tokens.push({type:this.options.sanitize?"paragraph":"html",pre:1==u[1].charAt(0),text:u[0]});continue;case"def":e=e.substring(u.src.length);u[3]&&(u[3]=u[3].substring(1,u[3].length-1));this.tokens.links[u[1].toLowerCase()]={href:u[2],title:u[3]};continue;case"paragraph":e=e.substring(u.src.length);this.tokens.push({type:"paragraph",text:u[0]});continue;case"text":e=e.substring(u.src.length);this.tokens.push({type:"paragraph",text:u[0]});continue;case"code":e=e.substring(u.src.length);this.tokens.push({type:"code",text:u[1]});continue;case"fences":e=e.substring(u.src.length);this.tokens.push({type:"code",lang:u[2],text:u[3]});continue;case"table":e=e.substring(u.src.length);n=u[1].replace(/^ *\| *| *\| *$/g,"").split(/ *\| */);for(var r=0;r<n.length;r++)n[r]=n[r].trim();var i=u[3].replace(/^ *\| *| *\| *$/g,"").split(/ *\| */);for(var r=0;r<i.length;r++)i[r]=i[r].trim();this.tokens.push({type:"table",header:n,align:i,cells:u[4].split("\n").map(function(e){var t=e.replace(/^ *\| *| *\| *$/g,"").split(/ *\| */);for(var u=0;u<t.length;u++)t[u]=t[u].trim();return t})});continue}throw new Error("Invalid block token: "+u[0])}throw new Error("Invalid block token: "+e)}}(t);var I=(function(e){function t(e){this.options=e}t.prototype.parse=function(e){this.inline=new u(e.links,this.options),this.tokens=e.slice(),this.tokens.links=e.links,this.tokens.options=e.options,this.options=F({},I.defaults,this.options),this.token=this.tokens.shift,this.tokens.push({type:"eof"}),this.options.renderer=this.options.renderer||new T,this.renderer=this.options.renderer,this.renderer.options=this.options;var t="";for(;this.token.type!=="eof";){switch(this.token.type){case"space":t+=this.renderer.space();break;case"hr":t+=this.renderer.hr();break;case"heading":t+=this.renderer.heading(this.inline.output(this.token.text),this.token.depth,this.token.text);break;case"code":t+=this.renderer.code(this.token.text,this.token.lang,this.token.escaped);break;case"table":t+=this.renderer.table(this.token.header.map(function(e){return this.inline.output(e)}.bind(this)),this.token.align,this.token.cells.map(function(e){return e.map(function(e){return this.inline.output(e)}.bind(this))}.bind(this)));break;case"blockquoteStart":t+=this.renderer.blockquote(this.parse());break;case"listStart":t+=this.renderer.list(this.parse(),this.token.ordered);break;case"listitemStart":t+=this.renderer.listitem(this.parse());break;case"html":t+=this.renderer.html(this.token.text);break;case"paragraph":t+=this.renderer.paragraph(this.inline.output(this.token.text));break;case"text":t+=this.inline.output(this.token.text);break;default:throw new Error("Invalid block token: "+this.token.type)}this.token=this.tokens.shift()}return t};var u=(function(e){function t(e,u){this.links=e,this.options=F({},I.defaults,u)}t.prototype.output=function(e){var t,u,n;for(t=e;t;){if(n=B(t,this.rules.inline.normal)){switch(n.type){case"escape":t=t.substring(n.src.length),u=this.outputEscape(n[1]);break;case"autolink":t=t.substring(n.src.length),u=this.renderer.link(n[1],n[1],n[1]);break;case"url":t=t.substring(n.src.length),u=this.renderer.link(n[1],n[1],n[1]);break;case"html":t=t.substring(n.src.length),u=this.options.sanitize?"":n[0];break;case"link":t=t.substring(n.src.length),u=this.outputLink(n,this.links[n[2].toLowerCase()]);break;case"reflink":t=t.substring(n.src.length),u=this.outputLink(n,this.links[n[1].toLowerCase()]);break;case"strong":t=t.substring(n.src.length),u=this.renderer.strong(this.output(n[2]||n[1]));break;case"em":t=t.substring(n.src.length),u=this.renderer.em(this.output(n[2]||n[1]));break;case"code":t=t.substring(n.src.length),u=this.renderer.codespan(L(n[1],this.options));break;case"br":t=t.substring(n.src.length),u=this.renderer.br();break;case"del":t=t.substring(n.src.length),u=this.renderer.del(this.output(n[1]));break;case"text":t=t.substring(n.src.length),u=this.outputText(n[0]);break;default:throw new Error("Invalid inline token: "+n[0])}e=e.substring(n.src.length),u=this.output(u)+this.output(e)}return u};t.prototype.outputEscape=function(e){return this.options.sanitize?L(e,this.options):e};t.prototype.outputLink=function(e,t){var u=e[1],n=t&&t.href;return n=L(n||e[3],this.options),this.renderer.link(n,t&&t.title,this.output(u))};t.prototype.outputText=function(e){return e};var n={};t.prototype.outputInline=function(e){return n[e]||(n[e]=this.output(e))},t.prototype.outputHtml=function(e){return this.options.sanitize?L(e,this.options):e};var r={};t.prototype.outputHtmlBlock=function(e){return r[e]||(r[e]=this.outputHtml(e))};var s={};t.prototype.outputCodeBlock=function(e){return s[e]||(s[e]=this.options.sanitize?L(e,this.options):e)};var l={};t.prototype.outputBlockquote=function(e){return l[e]||(l[e]=this.output(e))};var o={};t.prototype.outputList=function(e){return o[e]||(o[e]=this.output(e))};var a={};t.prototype.outputListitem=function(e){return a[e]||(a[e]=this.output(e))};var c={};t.prototype.outputTable=function(e){return c[e]||(c[e]=this.output(e))};var h={};t.prototype.outputTableRow=function(e){return h[e]||(h[e]=this.output(e))};var p={};t.prototype.outputTableCell=function(e){return p[e]||(p[e]=this.output(e))};var f={};t.prototype.outputParagraph=function(e){return f[e]||(f[e]=this.output(e))};var g={};t.prototype.outputText=function(e){return g[e]||(g[e]=this.output(e))};var m={};t.prototype.outputHeading=function(e){return m[e]||(m[e]=this.output(e))};var d={};t.prototype.outputHr=function(e){return d[e]||(d[e]=this.output(e))};var x={};t.prototype.outputSpace=function(e){return x[e]||(x[e]=this.output(e))};var v={};t.prototype.outputStrong=function(e){return v[e]||(v[e]=this.output(e))};var y={};t.prototype.outputEm=function(e){return y[e]||(y[e]=this.output(e))};var b={};t.prototype.outputCodeSpan=function(e){return b[e]||(b[e]=this.output(e))};var k={};t.prototype.outputBr=function(e){return k[e]||(k[e]=this.output(e))};var w={};t.prototype.outputDel=function(e){return w[e]||(w[e]=this.output(e))}}(u);var T=(function(e){function t(e){this.options=e}t.prototype.code=function(e,t,u){var n=t?t.match(/\S*/)[0]:"";return'<pre><code class="'+this.options.langPrefix+n+'">'+(u?e:L(e,this.options))+"</code></pre>\n"};t.prototype.blockquote=function(e){return"<blockquote>\n"+e+"</blockquote>\n"};t.prototype.html=function(e){return e};t.prototype.heading=function(e,t){return"<h"+t+">"+e+"</h"+t+">\n"};t.prototype.hr=function(){return"<hr>\n"};t.prototype.list=function(e,t){var u=t?"ol":"ul";return"<"+u+">\n"+e+"</"+u+">\n"};t.prototype.listitem=function(e){return"<li>"+e+"</li>\n"};t.prototype.paragraph=function(e){return"<p>"+e+"</p>\n"};t.prototype.table=function(e,t,u){var n="<thead>\n<tr>\n";for(var r=0;r<e.length;r++)n+=this.tablecell(e[r],{header:!0,align:t[r]});n+="</tr>\n</thead>\n";var i="<tbody>\n";for(var r=0;r<u.length;r++){i+="<tr>\n";for(var s=0;s<u[r].length;s++)i+=this.tablecell(u[r][s],{header:!1,align:t[s]});i+="</tr>\n"}return i+="</tbody>\n",'<table>\n'+n+i+"</table>\n"};t.prototype.tablerow=function(e){return"<tr>\n"+e+"</tr>\n"};t.prototype.tablecell=function(e,t){var u=t.header?"th":"td";return"<"+u+(t.align?' align="'+t.align+'"':"")+">"+e+"</"+u+">\n"};t.prototype.strong=function(e){return"<strong>"+e+"</strong>"};t.prototype.em=function(e){return"<em>"+e+"</em>"};t.prototype.codespan=function(e){return"<code>"+e+"</code>"};t.prototype.br=function(){return"<br>"};t.prototype.del=function(e){return"<del>"+e+"</del>"};t.prototype.link=function(e,t,u){if(this.options.sanitize){try{var n=decodeURIComponent(L(e,this.options))}catch(e){return u}if(n.indexOf("javascript:")===0||n.indexOf("vbscript:")===0)return u}else if(e.indexOf("javascript:")===0||e.indexOf("vbscript:")===0)return u;return'<a href="'+e+'"'+(t?' title="'+t+'"':"")+">"+u+"</a>"};t.prototype.image=function(e,t,u){if(this.options.sanitize){try{var n=decodeURIComponent(L(e,this.options))}catch(e){return u}if(n.indexOf("javascript:")===0||n.indexOf("vbscript:")===0)return u}else if(e.indexOf("javascript:")===0||e.indexOf("vbscript:")===0)return u;return'<img src="'+e+'" alt="'+u+'"'+(t?' title="'+t+'"':"")+">"};t.prototype.text=function(e){return e};t.prototype.space=function(){return""}}(T);var W=(function(e){function t(e){this.options=e}t.prototype.code=function(e,t,u){var n=(t||"").match(/\S*/)[0];return{type:"code",raw:e,text:e,lang:n,escaped:!!u}};t.prototype.blockquote=function(e){return{type:"blockquoteStart",raw:e,text:e,tokens:[]}};t.prototype.html=function(e){return{type:"html",raw:e,text:e}};t.prototype.heading=function(e,t){return{type:"heading",raw:e,text:e,depth:t}};t.prototype.hr=function(e){return{type:"hr",raw:e}};t.prototype.list=function(e,t){return{type:"listStart",raw:e,text:e,ordered:t,tokens:[]}};t.prototype.listitem=function(e){return{type:"listitemStart",raw:e,text:e,tokens:[]}};t.prototype.paragraph=function(e){return{type:"paragraph",raw:e,text:e}};t.prototype.table=function(e){return{type:"table",header:[],align:[],cells:[],raw:e}};t.prototype.tablerow=function(e){return{type:"tablerow",raw:e,text:e,tokens:[]}};t.prototype.tablecell=function(e){return{type:"tablecell",raw:e,text:e,tokens:[]}};t.prototype.strong=function(e){return{type:"strong",raw:e,text:e,tokens:[]}};t.prototype.em=function(e){return{type:"em",raw:e,text:e,tokens:[]}};t.prototype.codespan=function(e){return{type:"codespan",raw:e,text:e}};t.prototype.br=function(e){return{type:"br",raw:e}};t.prototype.del=function(e){return{type:"del",raw:e,text:e,tokens:[]}};t.prototype.link=function(e,t,u){return{type:"link",raw:e,text:e,href:t,title:u,tokens:[]}};t.prototype.image=function(e,t,u){return{type:"image",raw:e,text:e,href:t,title:u,tokens:[]}};t.prototype.text=function(e){return{type:"text",raw:e,text:e}};t.prototype.space=function(e){return{type:"space",raw:e}}(W);var A={newline:/^(\n{2,})/,code:/^ {4,}(.*?)(?:\n{2,}|$)/,hr:/^(?: {0,3}[-*])(?: *[-*]){2,} *(?:\n|$)/,heading:/^ {0,3}(#{1,6}) +([^\n]*?)(?: +#*)?(?:\n|$)/,lheading:/^([^\n]+)\n {0,3}(=+|-+) *(?:\n+|$)/,blockquote:/^ {0,3}>([^\n]*(?:\n(?:\s*>[^\n]*|(?!\s*$).*\n)*)?)/,list:/^ {0,3}(bull) [^\n]+(?:\n\s*[^bull][^\n]+)*\s*(?:\n|$)/,html:/^ {0,3}<(pre|script|style|textarea|code)[^\n]*?>[\s\S]*?<\/\1>(?:\n|$)|^ {0,3}<!--[\s\S]*?-->(?:\n|$)|^ {0,3}<\?[\s\S]*?\?>\n*|^ {0,3}<![A-Z][\s\S]*?>\n*|^ {0,3}<!\[CDATA[\s\S]*?\]\]>\n*|^ {0,3}<\/?\w+(?: |\n|$)[^>]*?>?(?:\n{2,}|$)/,def:/^ {0,3}\[([^\n]+?)\]: *<?([^\s>]+?)>?(?: *\([^\n]+?\))? *(?:\n+|$)/,table:/^ {0,3}\|.+\n *\| *[.-]:(?: *-{3})*:[.-] *\|(?:\n {0,3}\|.+\n)*\s*(?:\n|$)/,paragraph:/^([^\n]+(?:\n(?! {0,3}(?:hr|heading|lheading|blockquote|list|html|def|table)\b)[^\n]+)*)/,text:/^[\s\S]+/};A.def=j("",A.def.source.replace("(",{def:"(?: *\([^\n]+?\))"}.def)),A.list=j("",A.list.source.replace("bull",/[*+-]/)),A.hr=j("",A.hr.source.replace("[-*]",/[-*]/)),A.blockquote=j("",A.blockquote.source.replace(">\n",">\n")),A.html=j("",A.html.source.replace(">",">")),A.paragraph=j("",A.paragraph.source.replace("hr|heading|lheading|blockquote|list|html|def|table",A.hr.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+A.heading.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+A.lheading.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+A.blockquote.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+A.list.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+A.html.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+A.def.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+A.table.source.split(" {0,3}").join("").replace("(?:\n|$)", ""))),t.rules={};t.rules.block={};F(t.rules.block,A);var S={escape:/^\\([!"#$%&'()*+,-./:;<=>?@\[\]\\^_`{|}~])/,autolink:/^<(https?:\/\/[^\s>]+)>/,url:/^((?:https?|ftp|file):\/\/|www\.)[^\s<]+/i,html:/^<(\w+)(?:[^"'>]|\"[^\"]*\"|'[^']*')*?>/,link:/^!?\[(label)\]\(\s*(href)(?:\s+(title))?\s*\)/,reflink:/^!?\[(label)\]\s*\[([^\s\]]*)\]/,strong:/^__([\s\S]+?)__|^(\*\*[\s\S]+?\*\*)/,em:/^_([^\s_](?:[^_]|\s(?!_))+?)_|^(\*([^\s*]|(\s(?!\*)|[^*])?)+?\*)/,code:/^(`+)([\s\S]*?[^`])\1(?!`)/,br:/^ {2,}\n(?!\s*$)/,del:/^~~(?=\S)([\s\S]*?\S)~~/,text:/^[\s\S]+?(?=[\\<!\[`*~]|https?:\/\/[^\s<]+|\n{2,}| {2,}\n|\s*$)/};S.link=j("",S.link.source.replace("label",/(?:\[[^\[\]]*\]|[^\[\]])*?/).replace("href",/[^\s\x00-\x1f]*/).replace("title",/"[^"]*"/)),S.reflink=j("",S.reflink.source.replace("label",/(?:\[[^\[\]]*\]|[^\[\]])*?/)),u.rules={};u.rules.inline={};F(u.rules.inline,S);var C={newline:/^\n/,code:/^( {4}|(?:\t))[^\n]+(?:\n[^\n]+)*/,hr:/^(?: {0,3}[-*])(?: *[-*]){2,} *(?:\n|$)/,heading:/^ {0,3}(#{1,6}) +([^\n]*?)(?: +#*)?(?:\n|$)/,lheading:/^([^\n]+)\n {0,3}(=+|-+) *(?:\n+|$)/,blockquote:/^ {0,3}>[^\n]*(?:\n(?! {0,3} *(?:[*-] |\d+\. ))[^\n]*)*(?:\n|$)/,list:/^ {0,3}(bull) [^\n]+(?: *\n{1,}(?!\2) {0,3}[^\n]+)*\s*(?:\n|$)/,html:/^ {0,3}(?:<pre>[\s\S]*?<\/pre>|<script>[\s\S]*?<\/script>|<style>[\s\S]*?<\/style>|<!--[\s\S]*?-->|<\?[\s\S]*?\?>|<![A-Z][\s\S]*?>|<!\[CDATA[\s\S]*?\]\]>|<\/?\w+(?: |\n|$)[^>]*?>)(?:\n{2,}|$)/,def:/^ {0,3}\[([^\n]+?)\]: *<?([^\s>]+?)>?(?: *\([^\n]+?\))? *(?:\n+|$)/,table:/^ {0,3}\|.+\n {0,3}\| *[.-]:(?: *-{3})*:[.-] *\|(?:\n {0,3}\|.+\n)*\s*(?:\n|$)/,paragraph:/^([^\n]+(?:\n(?! {0,3}(?:hr|heading|lheading|blockquote|list|html|def|table)\b)[^\n]+)*)/,text:/^[\s\S]+/};C.list=j("",C.list.source.replace("bull",/[*+-]/)),C.blockquote=j("",C.blockquote.source.replace(">\n",">\n")),C.def=j("",C.def.source.replace("(",{def:"(?: *\([^\n]+?\))"}.def)),C.paragraph=j("",C.paragraph.source.replace("hr|heading|lheading|blockquote|list|html|def|table",C.hr.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+C.heading.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+C.lheading.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+C.blockquote.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+C.list.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+C.html.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+C.def.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+C.table.source.split(" {0,3}").join("").replace("(?:\n|$)", ""))),t.rules.block.gfm=F({},C),t.rules.block.gfm.paragraph=j("",C.paragraph.source.replace("hr|heading|lheading|blockquote|list|html|def|table",C.hr.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+C.heading.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+C.lheading.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+C.blockquote.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+C.list.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+C.html.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+C.def.source.split(" {0,3}").join("").replace("(?:\n|$)", "|")+"|"+C.table.source.split(" {0,3}").join("").replace("(?:\n|$)", ""))),C.list=j("",C.list.source.replace(/ {0,3}(bull)/," {0,3}[*+-]")),u.rules.inline.gfm=F({},S),u.rules.inline.gfm.escape=/^\\([!"#$%&'()*+,-./:;<=>?@\[\]\\^_`{|}~])/;var E={url:/^(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/,link:/^!?\[(label)\]\(\s*(href)(?:\s+(title))?\s*\)/,reflink:/^!?\[(label)\]\s*\[([^\s\]]*)\]/,em:/^(\*|[_-])(?=\S)([\s\S]*?\S)\1/,strong:/^(\*\*|__)(?=\S)([\s\S]*?\S)\1/,del:/^~~(?=\S)([\s\S]*?\S)~~/,text:/^[\s\S]+?(?=[\\<!\[`*~]|https?:\/\/[^\s<]+|\n{2,}| {2,}\n|\s*$)/};E.link=j("",E.link.source.replace("label",/(?:\[[^\[\]]*\]|[^\[\]])*?/).replace("href",/[^\s\x00-\x1f]*/).replace("title",/"[^"]*"/)),E.reflink=j("",E.reflink.source.replace("label",/(?:\[[^\[\]]*\]|[^\[\]])*?/)),u.rules.inline.breaks=F({},E),u.rules.inline.breaks.br=j("",/^(?: {2,}|\\)\n(?!\s*$)/),u.rules.inline.breaks.text=/^[\s\S]+?(?=[\\<!\[`*~]|https?:\/\/[^\s<]+|\n{2,}| {2,}\n|\s*$)/;var P={};u.rules.inline.original=F({},S),u.rules.inline.breaks.original=F({},E),t.rules.block.original=F({},A),t.rules.block.gfm.original=F({},C),u.rules.inline.original.text=/^[\s\S]+?(?=[\\<!\[`*~]|https?:\/\/[^\s<]+|\n{2,}| {2,}\n|\s*$)/,I.defaults={gfm:!0,breaks:!1,headerIds:!0,headerPrefix:"",mangle:!0,pedantic:!1,sanitize:!1,sanitizer:null,silent:!1,smartLists:!1,smartypants:!1,strict:!1,template:null,tokenizer:null,walkTokens:null,langPrefix:"language-",renderer:null,baseUrl:null,highlight:null},I.options=I.defaults,I.setOptions=function(e){return I.options=F({},I.defaults,e),I},I.parse=function(e,t){if("string"!=typeof e)throw new TypeError("marked(): input parameter must be a string");if(t&&("function"==typeof t||"function"==typeof t.highlight||t.renderer||t.tokenizer))return console.warn("marked(): The second argument is deprecated. Use marked.setOptions() instead."),I(e,t);try{var u=F({},I.options,t||{}),n=new t.Tokenizer(u,e);if(n.options=u,n.rules=t.rules,n.tokens=n.tokens||[],n.tokens.links=n.tokens.links||{},n.tokens.options=n.tokens.options||u,n.lexer=n.lexer||n.lex,n.lexer(e),n.tokens.links=F({},n.tokens.links,n.tokens.options.context),t.walkTokens)for(var r=D(n.tokens);!(i=r()).done;){var i=i.value;t.walkTokens.call(I,i)}var s=new t.Parser(u);s.tokens=n.tokens,s.tokens.links=n.tokens.links,s.tokens.options=n.tokens.options,s.options=u,s.renderer=t.renderer,s.inline=t.inline,s.lexer=n;var l=s.parse(s.tokens);return t.silent?l:I.defaults.silent?l:l}catch(e){if(t.silent)return"An error occurred.";throw e}},I.lexer=function(e,t){if("string"!=typeof e)throw new TypeError("marked(): input parameter must be a string");var u=F({},I.options,t||{}),n=new t.Tokenizer(u,e);return n.options=u,n.rules=t.rules,n.tokens=n.tokens||[],n.tokens.links=n.tokens.links||{},n.tokens.options=n.tokens.options||u,n.lexer=n.lexer||n.lex,n.lexer(e),n.tokens},I.parseInline=function(e,t){if("string"!=typeof e)throw new TypeError("marked(): input parameter must be a string");var u=F({},I.options,t||{}),n=new t.Tokenizer(u,e);if(n.options=u,n.rules=t.rules,n.tokens=n.tokens||[],n.tokens.links=n.tokens.links||{},n.tokens.options=n.tokens.options||u,n.lexer=n.lexer||n.lex,n.lexer(e),n.tokens.links=F({},n.tokens.links,n.tokens.options.context),t.walkTokens)for(var r=D(n.tokens);!(i=r()).done;){var i=i.value;t.walkTokens.call(I,i)}var s=new t.Parser(u);s.tokens=n.tokens,s.tokens.links=n.tokens.links,s.tokens.options=n.tokens.options,s.options=u,s.renderer=t.renderer,s.inline=t.inline,s.lexer=n;var l=s.inline.output(e);return t.silent?l:I.defaults.silent?l:l},I.Parser=(function(e){function t(e){this.options=F({},t.defaults,e)}t.defaults={};var u={};t.prototype.parse=function(e){this.inline=new n(e.links,this.options),this.tokens=e.slice(),this.tokens.links=e.links,this.tokens.options=e.options,this.options=F({},I.defaults,this.options),this.token=this.tokens.shift,this.tokens.push({type:"eof"}),this.options.renderer=this.options.renderer||new r,this.renderer=this.options.renderer,this.renderer.options=this.options;var t="";for(;this.token.type!=="eof";){switch(this.token.type){case"space":t+=this.renderer.space();break;case"hr":t+=this.renderer.hr();break;case"heading":t+=this.renderer.heading(this.inline.output(this.token.text),this.token.depth,this.token.text);break;case"code":t+=this.renderer.code(this.token.text,this.token.lang,this.token.escaped);break;case"table":t+=this.renderer.table(this.token.header.map(function(e){return this.inline.output(e)}.bind(this)),this.token.align,this.token.cells.map(function(e){return e.map(function(e){return this.inline.output(e)}.bind(this))}.bind(this)));break;case"blockquoteStart":t+=this.renderer.blockquote(this.parse());break;case"listStart":t+=this.renderer.list(this.parse(),this.token.ordered);break;case"listitemStart":t+=this.renderer.listitem(this.parse());break;case"html":t+=this.renderer.html(this.token.text);break;case"paragraph":t+=this.renderer.paragraph(this.inline.output(this.token.text));break;case"text":t+=this.inline.output(this.token.text);break;default:throw new Error("Invalid block token: "+this.token.type)}this.token=this.tokens.shift()}return t}}(I.Parser);I.Tokenizer=(function(e){function t(e,u){this.options=F({},t.defaults,e),this.rules=t.rules.block.normal,this.text=u}t.defaults={};var u={};t.prototype.lex=function(e){var t,u,n,r;for(e=e.replace(/\r\n|\r/g,"\n").replace(/\t/g,"    "),this.text=e,this.tokens.push({type:"space"}),t=this.text;t;){if(n=B(t,this.rules.block.normal)){switch(n.type){case"newline":t=t.substring(n.src.length);continue;case"hr":this.tokens.push({type:"hr"});t=t.substring(n.src.length);continue;case"heading":this.tokens.push({type:"heading",depth:n[1].length,text:n[2]});t=t.substring(n.src.length);continue;case"lheading":this.tokens.push({type:"heading",depth:1==n[2].charAt(0)?1:2,text:n[1]});t=t.substring(n.src.length);continue;case"blockquote":t=t.substring(n.src.length);this.tokens.push({type:"blockquoteStart"});n[1]=n[1].replace(/^ {0,3}> ?/gm,""),this.lex(n[1]);this.tokens.push({type:"blockquoteEnd"});continue;case"list":t=t.substring(n.src.length);u=n[2],n[2]=n[2].replace(/\n$/,""),this.tokens.push({type:"listStart",ordered:1==n[2].match(/^(\d+)\./)[1]?0:1});u.replace(/^ {0,3}(\d+)\. +([^\n]*(?:\n(?!\1\.)[^\n]*)*)/gm,function(e,t,u){this.tokens.push({type:"listitemStart"}),this.lex(u),this.tokens.push({type:"listitemEnd"})}.bind(this));this.tokens.push({type:"listEnd"});continue;case"html":t=t.substring(n.src.length);this.tokens.push({type:this.options.sanitize?"paragraph":"html",pre:1==n[1].charAt(0),text:n[0]});continue;case"def":t=t.substring(n.src.length);n[3]&&(n[3]=n[3].substring(1,n[3].length-1));this.tokens.links[n[1].toLowerCase()]={href:n[2],title:n[3]};continue;case"paragraph":t=t.substring(n.src.length);this.tokens.push({type:"paragraph",text:n[0]});continue;case"text":t=t.substring(n.src.length);this.tokens.push({type:"paragraph",text:n[0]});continue;case"code":t=t.substring(n.src.length);this.tokens.push({type:"code",text:n[1]});continue;case"fences":t=t.substring(n.src.length);this.tokens.push({type:"code",lang:n[2],text:n[3]});continue;case"table":t=t.substring(n.src.length);r=n[1].replace(/^ *\| *| *\| *$/g,"").split(/ *\| */);for(var i=0;i<r.length;i++)r[i]=r[i].trim();var s=n[3].replace(/^ *\| *| *\| *$/g,"").split(/ *\| */);for(var i=0;i<s.length;i++)s[i]=s[i].trim();this.tokens.push({type:"table",header:r,align:s,cells:n[4].split("\n").map(function(e){var t=e.replace(/^ *\| *| *\| *$/g,"").split(/ *\| */);for(var u=0;u<t.length;u++)t[u]=t[u].trim();return t})});continue}throw new Error("Invalid block token: "+n[0])}throw new Error("Invalid block token: "+t)}}(I.Tokenizer);I.Renderer=(function(e){function t(e){this.options=F({},t.defaults,e)}t.defaults={};var u={};t.prototype.code=function(e,t,u){var n=(t||"").match(/\S*/)[0];return'<pre><code class="'+this.options.langPrefix+n+'">'+(u?e:L(e,this.options))+"</code></pre>\n"};t.prototype.blockquote=function(e){return"<blockquote>\n"+e+"</blockquote>\n"};t.prototype.html=function(e){return e};t.prototype.heading=function(e,t){return"<h"+t+">"+e+"</h"+t+">\n"};t.prototype.hr=function(){return"<hr>\n"};t.prototype.list=function(e,t){var u=t?"ol":"ul";return"<"+u+">\n"+e+"</"+u+">\n"};t.prototype.listitem=function(e){return"<li>"+e+"</li>\n"};t.prototype.paragraph=function(e){return"<p>"+e+"</p>\n"};t.prototype.table=function(e,t,u){var n="<thead>\n<tr>\n";for(var r=0;r<e.length;r++)n+=this.tablecell(e[r],{header:!0,align:t[r]});n+="</tr>\n</thead>\n";var i="<tbody>\n";for(var r=0;r<u.length;r++){i+="<tr>\n";for(var s=0;s<u[r].length;s++)i+=this.tablecell(u[r][s],{header:!1,align:t[s]});i+="</tr>\n"}return i+="</tbody>\n",'<table>\n'+n+i+"</table>\n"};t.prototype.tablerow=function(e){return"<tr>\n"+e+"</tr>\n"};t.prototype.tablecell=function(e,t){var u=t.header?"th":"td";return"<"+u+(t.align?' align="'+t.align+'"':"")+">"+e+"</"+u+">\n"};t.prototype.strong=function(e){return"<strong>"+e+"</strong>"};t.prototype.em=function(e){return"<em>"+e+"</em>"};t.prototype.codespan=function(e){return"<code>"+e+"</code>"};t.prototype.br=function(){return"<br>"};t.prototype.del=function(e){return"<del>"+e+"</del>"};t.prototype.link=function(e,t,u){if(this.options.sanitize){try{var n=decodeURIComponent(L(e,this.options))}catch(e){return u}if(n.indexOf("javascript:")===0||n.indexOf("vbscript:")===0)return u}else if(e.indexOf("javascript:")===0||e.indexOf("vbscript:")===0)return u;return'<a href="'+e+'"'+(t?' title="'+t+'"':"")+">"+u+"</a>"};t.prototype.image=function(e,t,u){if(this.options.sanitize){try{var n=decodeURIComponent(L(e,this.options))}catch(e){return u}if(n.indexOf("javascript:")===0||n.indexOf("vbscript:")===0)return u}else if(e.indexOf("javascript:")===0||e.indexOf("vbscript:")===0)return u;return'<img src="'+e+'" alt="'+u+'"'+(t?' title="'+t+'"':"")+">"};t.prototype.text=function(e){return e};t.prototype.space=function(){return""}}(I.Renderer);I.TextRenderer=(function(e){function t(){}t.prototype.strong=t.prototype.em=t.prototype.codespan=t.prototype.del=t.prototype.text=function(e){return e};t.prototype.br=t.prototype.hr=t.prototype.space=function(){return""};t.prototype.link=t.prototype.image=function(e,t,u){return u};t.prototype.html=function(e){return e}}(I.TextRenderer);I.Lexer=(function(e){function t(e){this.tokens=e}t.prototype.lex=function(e){return this.tokens.links=e.links,this.tokens.options=e.options,this.tokens.push({type:"space"}),this.tokens}}(I.Lexer);I.InlineLexer=(function(e){function t(e,u){this.links=e,this.options=u}t.prototype.output=function(e){var t,u,n;for(t=e;t;){if(n=B(t,this.rules.inline.normal)){switch(n.type){case"escape":t=t.substring(n.src.length),u=this.outputEscape(n[1]);break;case"autolink":t=t.substring(n.src.length),u=this.renderer.link(n[1],n[1],n[1]);break;case"url":t=t.substring(n.src.length),u=this.renderer.link(n[1],n[1],n[1]);break;case"html":t=t.substring(n.src.length),u=this.options.sanitize?"":n[0];break;case"link":t=t.substring(n.src.length),u=this.outputLink(n,this.links[n[2].toLowerCase()]);break;case"reflink":t=t.substring(n.src.length),u=this.outputLink(n,this.links[n[1].toLowerCase()]);break;case"strong":t=t.substring(n.src.length),u=this.renderer.strong(this.output(n[2]||n[1]));break;case"em":t=t.substring(n.src.length),u=this.renderer.em(this.output(n[2]||n[1]));break;case"code":t=t.substring(n.src.length),u=this.renderer.codespan(L(n[1],this.options));break;case"br":t=t.substring(n.src.length),u=this.renderer.br();break;case"del":t=t.substring(n.src.length),u=this.renderer.del(this.output(n[1]));break;case"text":t=t.substring(n.src.length),u=this.outputText(n[0]);break;default:throw new Error("Invalid inline token: "+n[0])}e=e.substring(n.src.length),u=this.output(u)+this.output(e)}return u};t.prototype.outputEscape=function(e){return this.options.sanitize?L(e,this.options):e};t.prototype.outputLink=function(e,t){var u=e[1],n=t&&t.href;return n=L(n||e[3],this.options),this.renderer.link(n,t&&t.title,this.output(u))};t.prototype.outputText=function(e){return e}}(I.InlineLexer);I.hooks=(function(e){function t(){}t.prototype.preprocess=function(e){return e};t.prototype.postprocess=function(e){return e};t.prototype.processBlock=function(e){return e};t.prototype.processInline=function(e){return e}}(I.hooks);I.use=function(e){var t=I.defaults.extensions||[];if(I.options.renderer){var u=new I.options.renderer;e.renderer&&e.renderer.forEach(function(e){u[e.name]=e.func});I.options.renderer=u}if(I.options.tokenizer){var n=new I.options.tokenizer;e.tokenizer&&e.tokenizer.forEach(function(e){n[e.name]=e.func});I.options.tokenizer=n}if(e.extensions)for(var r=D(e.extensions);!(i=r()).done;)!function(){var r=i.value;t.push(r),I.defaults.extensions=t;var s=I.defaults.rules||{};r.tokenizer?(r.tokenizer.block&&!function(e,t){for(var u,n=D(t);!(u=n()).done;){var u=u.value;e[u.name]=u.rule}}(s.block=F({},s.block),r.tokenizer.block),r.tokenizer.inline&&!function(e,t){for(var u,n=D(t);!(u=n()).done;){var u=u.value;e[u.name]=u.rule}}(s.inline=F({},s.inline),r.tokenizer.inline)):r.tokenizer.normal&&(r.tokenizer.normal.block&&!function(e,t){for(var u,n=D(t);!(u=n()).done;){var u=u.value;e[u.name]=u.rule}}(s.block=F({},s.block),r.tokenizer.normal.block),r.tokenizer.normal.inline&&!function(e,t){for(var u,n=D(t);!(u=n()).done;){var u=u.value;e[u.name]=u.rule}}(s.inline=F({},s.inline),r.tokenizer.normal.inline));I.defaults.rules=s}if(e.hooks){var s=I.options.hooks||new I.hooks;for(var l in e.hooks)!function(r){var i=s[r];s[r]=function(){for(var e=arguments.length,t=new Array(e),u=0;u<e;u++)t[u]=arguments[u];var n=e.hooks[r].apply(this,t);return n=!1===n?i.apply(this,t):n}}(l);I.options.hooks=s}s.walkTokens&&(u=I.defaults.walkTokens,I.defaults.walkTokens=function(e){var t=[];return t.push(s.walkTokens.call(this,e)),t=u?t.concat(u.call(this,e)):t},I.walkTokens=function(e,l){for(var o,a=[],t=D(e);!(o=t()).done;)!function(){var t=o.value;switch(a=a.concat(l.call(I,t)),t.type){case"table":for(var e=D(t.header);!(u=e()).done;){var u=u.value;a=a.concat(I.walkTokens(u.tokens,l))}for(var n,r=D(t.rows);!(n=r()).done;)for(var i=D(n.value);!(s=i()).done;){var s=s.value;a=a=a.concat(I.walkTokens(s.tokens,l))}break;case"list":a=a.concat(I.walkTokens(t.items,l));break;default:I.defaults.extensions&&I.defaults.extensions.childTokens&&I.defaults.extensions.childTokens[t.type]&&I.defaults.extensions.childTokens[t.type].forEach(function(e){a=a.concat(I.walkTokens(t[e],l))})}
-            // --- END marked.js content ---
+            // Global flag for config loading status
+            let configLoaded = false;
 
-                        // Function to load the blog title and subtitle from blog.txt
-                        async function loadBlogConfig() {
-                            try {
-                                const response = await fetch("blog.txt");
-                                if (!response.ok) {
-                                    console.warn(
-                                        "blog.txt not found, using default title/subtitle.",
-                                    );
-                                    return;
-                                }
+            // Function to load the blog title and subtitle from config.json
+            async function loadBlogConfig() {
+                try {
+                    const response = await fetch("config.json");
+                    if (!response.ok) {
+                        throw new Error(
+                            "Blog configuration file (config.json) not found.",
+                        );
+                    }
+                    const config = await response.json();
+                    document.getElementById("blogTitle").textContent =
+                        config.title || "MD Blog";
+                    document.getElementById("blogSubtitle").textContent =
+                        config.subtitle || "A simple markdown blog.";
+                    document.title = config.title || "MD Blog";
+                    configLoaded = true;
+                } catch (err) {
+                    showError(`Error loading blog config: ${err.message}`);
+                    // Allow post loading to continue even if config fails
+                    configLoaded = false;
+                }
+            }
 
-                                const data = await response.text();
-                                // Split the file content by newline to get the title (line 1) and subtitle (line 2)
-                                const lines = data.trim().split("\n");
-                                const title = lines[0] || "MD Blog";
-                                const subtitle = lines[1] || "A Markdown Blog";
+            // Function to load the list of posts from posts.txt
+            async function loadPostList() {
+                const postsList = document.getElementById("postsList");
+                postsList.innerHTML = ""; // Clear existing list content
 
-                                // Update HTML elements
-                                document.title = title;
-                                document.querySelector("header h1").textContent = title;
-                                document.querySelector("header .subtitle").textContent =
-                                    subtitle;
-                            } catch (err) {
-                                console.error("Error loading blog.txt:", err);
-                            }
+                try {
+                    const response = await fetch("posts.txt");
+
+                    if (!response.ok) {
+                        throw new Error(
+                            "Post list file (posts.txt) not found.",
+                        );
+                    }
+
+                    const data = await response.text();
+                    const lines = data.split("\n");
+                    let postCount = 0;
+
+                    lines.forEach((line) => {
+                        // Skip comments and empty lines
+                        if (line.startsWith("#") || line.trim() === "") {
+                            return;
                         }
 
-                        // Function to load the list of posts from posts.txt
-                        async function loadPostList() {
-                            const postList = document.getElementById("postList");
-                            postList.innerHTML = "<p>Loading posts...</p>";
+                        // Split by pipe, trim whitespace
+                        const parts = line.split("|").map((p) => p.trim());
 
-                            try {
-                                // Fetch the posts list from the new text file
-                                const response = await fetch("posts.txt");
+                        // Must have at least filename and title
+                        if (parts.length >= 2) {
+                            const filename = parts[0];
+                            const title = parts[1];
+                            const description =
+                                parts.length > 2 ? parts[2] : "";
 
-                                if (!response.ok) {
-                                    throw new Error("posts.txt not found");
-                                }
-
-                                const rawData = await response.text();
-                                const lines = rawData.trim().split("\n");
-                                let posts = [];
-
-                                // Parse the posts.txt file. Format is expected to be:
-                                // filename | title | description
-                                for (const line of lines) {
-                                    const trimmedLine = line.trim();
-                                    // Skip empty lines and lines starting with '#' (for comments)
-                                    if (!trimmedLine || trimmedLine.startsWith("#")) {
-                                        continue;
+                            // Create the list item and button
+                            const li = document.createElement("li");
+                            li.className = "post-item";
+                            li.innerHTML = `
+                                <button onclick="loadPost('${filename}')" class="post-button">
+                                    <span class="post-title">${title}</span>
+                                    ${
+                                        description
+                                            ? `<span class="post-description">${description}</span>`
+                                            : ""
                                     }
-                                    // Split by pipe '|' and trim whitespace
-                                    const parts = trimmedLine.split("|").map((p) => p.trim());
-
-                                    if (parts.length >= 1 && parts[0]) {
-                                        // Extract data, using the filename as a fallback for the title
-                                        posts.push({
-                                            file: parts[0],
-                                            title:
-                                                parts[1] ||
-                                                parts[0]
-                                                    .replace(".md", "")
-                                                    .replace(/-/g, " ")
-                                                    .replace(/_/g, " "),
-                                            description: parts[2] || "",
-                                        });
-                                    }
-                                }
-
-                                if (posts.length === 0) {
-                                    postList.innerHTML =
-                                        "<p>No posts found. Add posts to posts.txt in 'filename | title | description' format.</p>";
-                                    return;
-                                }
-
-                                postList.innerHTML = "";
-
-                                // Dynamically create the list of post items
-                                for (const post of posts) {
-                                    const postItem = document.createElement("div");
-                                    postItem.className = "post-item";
-                                    postItem.onclick = () => loadPost(post.file);
-
-                                    const title = document.createElement("div");
-                                    title.className = "post-title";
-                                    title.textContent = post.title;
-
-                                    postItem.appendChild(title);
-
-                                    if (post.description) {
-                                        const desc = document.createElement("div");
-                                        desc.className = "post-description";
-                                        desc.textContent = post.description;
-                                        postItem.appendChild(desc);
-                                    }
-
-                                    postList.appendChild(postItem);
-                                }
-                            } catch (err) {
-                                postList.innerHTML = "";
-                                showError(
-                                    `Error loading posts.txt: ${err.message}. Make sure posts.txt exists in the same directory and follows the 'filename | title | description' format.`,
-                                );
-                            }
+                                    <svg class="arrow-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                </button>
+                            `;
+                            postsList.appendChild(li);
+                            postCount++;
                         }
+                    });
 
-                        async function loadPost(filename) {
-                            try {
-                                const response = await fetch(filename);
+                    // *** New check for empty list to provide feedback ***
+                    if (postCount === 0) {
+                        postsList.innerHTML =
+                            "<li class='post-item-empty'>No posts found in posts.txt. Check the file format (must be 'filename | title | description').</li>";
+                    } else {
+                        // Hide error message if successful
+                        document
+                            .getElementById("errorMsg")
+                            .classList.add("hidden");
+                    }
+                } catch (err) {
+                    showError(`Error loading post list: ${err.message}`);
+                    postsList.innerHTML =
+                        "<li class='post-item-empty'>Could not load posts.txt. See error message above.</li>";
+                }
+            }
 
-                                if (!response.ok) {
-                                    throw new Error(`File not found: ${filename}`);
-                                }
+            async function loadPost(filename) {
+                try {
+                    const response = await fetch(filename);
 
-                                const data = await response.text();
-                                // marked.parse is now available because the library is embedded above
-                                const html = marked.parse(data);
+                    if (!response.ok) {
+                        throw new Error(`File not found: ${filename}`);
+                    }
 
-                                document.getElementById("postContent").innerHTML = html;
-                                document.getElementById("listView").classList.add("hidden");
-                                document
-                                    .getElementById("postView")
-                                    .classList.remove("hidden");
-                                document.getElementById("errorMsg").classList.add("hidden");
-                            } catch (err) {
-                                showError(`Error loading ${filename}: ${err.message}`);
-                            }
-                        }
+                    const data = await response.text();
+                    // marked.parse requires the marked library to be loaded
+                    const html = marked.parse(data);
 
-                        function showList() {
-                            document.getElementById("listView").classList.remove("hidden");
-                            document.getElementById("postView").classList.add("hidden");
-                            document.getElementById("errorMsg").classList.add("hidden");
-                        }
+                    document.getElementById("postContent").innerHTML = html;
+                    document.getElementById("listView").classList.add("hidden");
+                    document
+                        .getElementById("postView")
+                        .classList.remove("hidden");
+                    document.getElementById("errorMsg").classList.add("hidden");
+                } catch (err) {
+                    showError(`Error loading ${filename}: ${err.message}`);
+                }
+            }
 
-                        function showError(msg) {
-                            const errorEl = document.getElementById("errorMsg");
-                            errorEl.textContent = msg;
-                            errorEl.classList.remove("hidden");
-                        }
+            function showList() {
+                document.getElementById("listView").classList.remove("hidden");
+                document.getElementById("postView").classList.add("hidden");
+                document.getElementById("errorMsg").classList.add("hidden");
+            }
 
-                        // Initialize function to load config and then posts
-                        (async function init() {
-                            await loadBlogConfig();
-                            await loadPostList();
-                        })();
+            function showError(msg) {
+                const errorEl = document.getElementById("errorMsg");
+                errorEl.textContent = msg;
+                errorEl.classList.remove("hidden");
+            }
+
+            // Initialize function to load config and then posts
+            (async function init() {
+                await loadBlogConfig();
+                await loadPostList();
+            })();
         </script>
     </body>
 </html>
