@@ -1,4 +1,4 @@
 # Filename | Title | Description
 # Use a pipe | to separate fields. Lines starting with # are comments.
-welcome.md | Welcome | Welcome to MD Blog.
+Welcome.md | Welcome | Welcome to MD Blog.
 readme.md | Read Me | How to use MD Blog.
