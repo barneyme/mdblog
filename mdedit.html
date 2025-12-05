@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>MD edit</title>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    sans-serif;
+                background: #1a1a1a;
+                color: #e0e0e0;
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .header {
+                background: #2d2d2d;
+                border-bottom: 1px solid #404040;
+                padding: 12px 20px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-shrink: 0;
+            }
+
+            .logo {
+                font-size: 18px;
+                font-weight: 600;
+                color: #4caf50;
+            }
+
+            .mode-toggle {
+                display: flex;
+                background: #404040;
+                border-radius: 6px;
+                overflow: hidden;
+            }
+
+            .mode-btn {
+                padding: 8px 16px;
+                background: none;
+                border: none;
+                color: #e0e0e0;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .mode-btn.active {
+                background: #4caf50;
+                color: white;
+            }
+
+            .toolbar {
+                background: #2d2d2d;
+                border-bottom: 1px solid #404040;
+                padding: 8px 20px;
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                flex-wrap: wrap;
+                flex-shrink: 0;
+            }
+
+            .btn {
+                padding: 6px 12px;
+                background: #404040;
+                border: none;
+                border-radius: 4px;
+                color: #e0e0e0;
+                cursor: pointer;
+                font-size: 13px;
+                transition: all 0.2s;
+            }
+
+            .btn:hover {
+                background: #505050;
+            }
+
+            .btn.primary {
+                background: #4caf50;
+                color: white;
+            }
+
+            .btn.primary:hover {
+                background: #45a049;
+            }
+
+            .divider {
+                width: 1px;
+                height: 20px;
+                background: #505050;
+                margin: 0 4px;
+            }
+
+            .editor-container {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            .editor {
+                flex: 1;
+                padding: 20px;
+                background: #1a1a1a;
+                border: none;
+                outline: none;
+                color: #e0e0e0;
+                font-family: "Consolas", "Monaco", "Courier New", monospace;
+                font-size: 14px;
+                line-height: 1.6;
+                resize: none;
+                overflow-y: auto;
+            }
+
+            .md-editor {
+                background: #202020;
+                padding: 20px;
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+
+            .md-editor h1,
+            .md-editor h2,
+            .md-editor h3,
+            .md-editor h4,
+            .md-editor h5,
+            .md-editor h6 {
+                margin: 16px 0 8px 0;
+                color: #4caf50;
+            }
+
+            .md-editor p {
+                margin: 8px 0;
+            }
+
+            .md-editor ul,
+            .md-editor ol {
+                margin: 8px 0;
+                padding-left: 24px;
+            }
+
+            .md-editor blockquote {
+                border-left: 4px solid #4caf50;
+                padding-left: 16px;
+                margin: 16px 0;
+                font-style: italic;
+                color: #b0b0b0;
+            }
+
+            .md-editor code {
+                background: #2d2d2d;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-family: "Consolas", "Monaco", "Courier New", monospace;
+                color: #e0e0e0;
+            }
+
+            .md-editor pre {
+                background: #2d2d2d;
+                padding: 16px;
+                border-radius: 6px;
+                overflow-x: auto;
+                margin: 16px 0;
+            }
+
+            .md-editor pre code {
+                background: none;
+                padding: 0;
+            }
+
+            .hidden {
+                display: none !important;
+            }
+
+            .file-input {
+                display: none;
+            }
+
+            .status {
+                background: #2d2d2d;
+                border-top: 1px solid #404040;
+                padding: 8px 20px;
+                font-size: 12px;
+                color: #b0b0b0;
+                text-align: right;
+            }
+
+            .shortcut {
+                opacity: 0.7;
+                font-size: 11px;
+                margin-left: 8px;
+            }
+        </style>
+    </head>
+    <body>
+        <header class="header">
+            <div class="logo">MD edit</div>
+            <div class="mode-toggle">
+                <button class="mode-btn active" onclick="switchMode('txt')">
+                    TXT
+                </button>
+                <button class="mode-btn" onclick="switchMode('md')">MD</button>
+            </div>
+        </header>
+
+        <div class="toolbar">
+            <button class="btn primary" onclick="openFile()">
+                Open<span class="shortcut">Ctrl+O</span>
+            </button>
+            <button class="btn primary" onclick="saveFile()">
+                Save<span class="shortcut">Ctrl+S</span>
+            </button>
+
+            <button class="btn" id="saveMdBtn" onclick="saveAsMd()">
+                Save .MD
+            </button>
+            <button class="btn" id="saveHtmlBtn" onclick="saveAsHtml()">
+                Save .HTML
+            </button>
+            <button class="btn" id="savePdfBtn" onclick="saveAsPdf()">
+                Save .PDF
+            </button>
+
+            <div class="divider"></div>
+
+            <div id="mdToolbar">
+                <button class="btn" onclick="formatText('bold')">Bold</button>
+                <button class="btn" onclick="formatText('italic')">
+                    Italic
+                </button>
+                <button class="btn" onclick="formatText('strikethrough')">
+                    Strike
+                </button>
+                <div class="divider"></div>
+                <button class="btn" onclick="formatText('h1')">H1</button>
+                <button class="btn" onclick="formatText('h2')">H2</button>
+                <button class="btn" onclick="formatText('h3')">H3</button>
+                <div class="divider"></div>
+                <button class="btn" onclick="formatText('ul')">• List</button>
+                <button class="btn" onclick="formatText('ol')">1. List</button>
+                <button class="btn" onclick="formatText('quote')">Quote</button>
+                <button class="btn" onclick="formatText('code')">Code</button>
+                <button class="btn" onclick="formatText('link')">Link</button>
+            </div>
+        </div>
+
+        <div class="editor-container">
+            <textarea
+                class="editor"
+                id="txtEditor"
+                placeholder="Start typing your text..."
+            ></textarea>
+            <div
+                class="editor md-editor hidden"
+                id="mdEditor"
+                contenteditable="true"
+            >
+                <p>Start typing with markdown formatting...</p>
+            </div>
+        </div>
+
+        <div class="status">
+            <span id="status">Ready</span>
+        </div>
+
+        <input
+            type="file"
+            class="file-input"
+            id="fileInput"
+            accept=".txt,.md"
+        />
+
+        <script>
+            let currentMode = "txt";
+            let currentContent = "";
+            let fileName = "untitled.txt";
+
+            // Initialize on page load
+            window.onload = function () {
+                updateUI();
+                updateStatus("Ready - Use Ctrl+O to open, Ctrl+S to save");
+            };
+
+            // Mode switching
+            function switchMode(mode) {
+                if (mode === currentMode) return;
+
+                // Save current content
+                if (currentMode === "txt") {
+                    currentContent = document.getElementById("txtEditor").value;
+                } else {
+                    currentContent =
+                        document.getElementById("mdEditor").innerHTML;
+                }
+
+                currentMode = mode;
+                updateUI();
+                updateStatus(`Switched to ${mode.toUpperCase()} mode`);
+            }
+
+            function updateUI() {
+                const txtEditor = document.getElementById("txtEditor");
+                const mdEditor = document.getElementById("mdEditor");
+                const mdToolbar = document.getElementById("mdToolbar");
+                const saveHtmlBtn = document.getElementById("saveHtmlBtn");
+                const savePdfBtn = document.getElementById("savePdfBtn");
+                // Added new button reference
+                const saveMdBtn = document.getElementById("saveMdBtn");
+
+                // Update mode buttons
+                document.querySelectorAll(".mode-btn").forEach((btn) => {
+                    if (btn.textContent === currentMode.toUpperCase()) {
+                        btn.classList.add("active");
+                    } else {
+                        btn.classList.remove("active");
+                    }
+                });
+
+                if (currentMode === "txt") {
+                    // TXT mode
+                    txtEditor.classList.remove("hidden");
+                    mdEditor.classList.add("hidden");
+                    mdToolbar.style.display = "none";
+                    saveHtmlBtn.style.display = "none";
+                    savePdfBtn.style.display = "none";
+                    // Generally hiding MD exports in TXT mode to match existing style
+                    // (Change to 'inline-block' if you want it visible in both)
+                    saveMdBtn.style.display = "none";
+
+                    // Convert HTML to markdown if switching from MD mode
+                    if (currentContent && currentContent.includes("<")) {
+                        txtEditor.value = htmlToMarkdown(currentContent);
+                    } else {
+                        txtEditor.value = currentContent || "";
+                    }
+                } else {
+                    // MD mode
+                    txtEditor.classList.add("hidden");
+                    mdEditor.classList.remove("hidden");
+                    mdToolbar.style.display = "inline-flex";
+                    saveHtmlBtn.style.display = "inline-block";
+                    savePdfBtn.style.display = "inline-block";
+                    saveMdBtn.style.display = "inline-block";
+
+                    // Convert markdown to HTML if switching from TXT mode
+                    if (currentContent && !currentContent.includes("<")) {
+                        mdEditor.innerHTML = markdownToHtml(currentContent);
+                    } else if (currentContent) {
+                        mdEditor.innerHTML = currentContent;
+                    }
+                }
+            }
+
+            // File operations
+            function openFile() {
+                document.getElementById("fileInput").click();
+            }
+
+            document
+                .getElementById("fileInput")
+                .addEventListener("change", (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    fileName = file.name;
+                    const reader = new FileReader();
+
+                    reader.onload = (e) => {
+                        const content = e.target.result;
+
+                        if (currentMode === "txt") {
+                            document.getElementById("txtEditor").value =
+                                content;
+                        } else {
+                            // If it's a markdown file, convert to HTML for WYSIWYG
+                            if (file.name.endsWith(".md")) {
+                                document.getElementById("mdEditor").innerHTML =
+                                    markdownToHtml(content);
+                            } else {
+                                document.getElementById("mdEditor").innerHTML =
+                                    content.replace(/\n/g, "<br>");
+                            }
+                        }
+
+                        updateStatus(`Opened: ${fileName}`);
+                    };
+
+                    reader.readAsText(file);
+                });
+
+            function saveFile() {
+                let content, mimeType, extension;
+
+                if (currentMode === "txt") {
+                    content = document.getElementById("txtEditor").value;
+                    mimeType = "text/plain";
+                    extension = fileName.endsWith(".md") ? ".md" : ".txt";
+                } else {
+                    content = htmlToMarkdown(
+                        document.getElementById("mdEditor").innerHTML,
+                    );
+                    mimeType = "text/markdown";
+                    extension = ".md";
+                }
+
+                downloadFile(
+                    content,
+                    fileName || `untitled${extension}`,
+                    mimeType,
+                );
+                updateStatus(`Saved: ${fileName}`);
+            }
+
+            // NEW FUNCTION: Save as MD
+            function saveAsMd() {
+                let content;
+
+                // Get content based on mode, but force markdown structure
+                if (currentMode === "txt") {
+                    content = document.getElementById("txtEditor").value;
+                } else {
+                    content = htmlToMarkdown(
+                        document.getElementById("mdEditor").innerHTML,
+                    );
+                }
+
+                // Force .md extension
+                const baseName = fileName.replace(/\.(txt|md|html|pdf)$/, "");
+                const mdFileName = `${baseName}.md`;
+
+                downloadFile(content, mdFileName, "text/markdown");
+                updateStatus(`Saved as MD: ${mdFileName}`);
+            }
+
+            function saveAsHtml() {
+                if (currentMode !== "md") return;
+
+                const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Exported Document</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+        h1, h2, h3 { color: #333; }
+        code { background: #f0f0f0; padding: 2px 4px; border-radius: 3px; }
+        pre { background: #f0f0f0; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        blockquote { border-left: 4px solid #ccc; padding-left: 15px; margin: 15px 0; font-style: italic; }
+    </style>
+</head>
+<body>
+${document.getElementById("mdEditor").innerHTML}
+</body>
+</html>`;
+
+                const htmlFileName = fileName.replace(/\.(txt|md)$/, ".html");
+                downloadFile(htmlContent, htmlFileName, "text/html");
+                updateStatus(`Saved as HTML: ${htmlFileName}`);
+            }
+
+            function saveAsPdf() {
+                if (currentMode !== "md") return;
+
+                const printWindow = window.open("", "_blank");
+                const pdfContent = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>PDF Export</title>
+    <style>
+        @media print {
+            body { margin: 0; }
+            @page { margin: 1in; }
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+            background: white;
+        }
+        h1, h2, h3 {
+            color: #333;
+            page-break-after: avoid;
+        }
+        h1 { font-size: 24px; margin: 24px 0 16px 0; }
+        h2 { font-size: 20px; margin: 20px 0 12px 0; }
+        h3 { font-size: 16px; margin: 16px 0 8px 0; }
+        p { margin: 8px 0; }
+        code {
+            background: #f0f0f0;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        pre {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            page-break-inside: avoid;
+        }
+        blockquote {
+            border-left: 4px solid #ccc;
+            padding-left: 15px;
+            margin: 15px 0;
+            font-style: italic;
+        }
+        ul, ol {
+            padding-left: 20px;
+            margin: 8px 0;
+        }
+        li { margin: 4px 0; }
+    </style>
+</head>
+<body>
+${document.getElementById("mdEditor").innerHTML}
+</body>
+</html>`;
+
+                printWindow.document.write(pdfContent);
+                printWindow.document.close();
+
+                printWindow.onload = function () {
+                    setTimeout(() => {
+                        printWindow.print();
+                        setTimeout(() => {
+                            printWindow.close();
+                        }, 1000);
+                    }, 500);
+                };
+
+                const pdfFileName = fileName.replace(/\.(txt|md)$/, ".pdf");
+                updateStatus(`Opening print dialog for PDF: ${pdfFileName}`);
+            }
+
+            function downloadFile(content, filename, mimeType) {
+                const blob = new Blob([content], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            // Markdown formatting functions
+            function formatText(format) {
+                if (currentMode !== "md") return;
+
+                const selection = window.getSelection();
+                const range = selection.getRangeAt(0);
+
+                switch (format) {
+                    case "bold":
+                        document.execCommand("bold");
+                        break;
+                    case "italic":
+                        document.execCommand("italic");
+                        break;
+                    case "strikethrough":
+                        document.execCommand("strikeThrough");
+                        break;
+                    case "h1":
+                    case "h2":
+                    case "h3":
+                        document.execCommand("formatBlock", false, format);
+                        break;
+                    case "ul":
+                        document.execCommand("insertUnorderedList");
+                        break;
+                    case "ol":
+                        document.execCommand("insertOrderedList");
+                        break;
+                    case "quote":
+                        document.execCommand(
+                            "formatBlock",
+                            false,
+                            "blockquote",
+                        );
+                        break;
+                    case "code":
+                        if (selection.toString()) {
+                            const code = document.createElement("code");
+                            code.textContent = selection.toString();
+                            range.deleteContents();
+                            range.insertNode(code);
+                        }
+                        break;
+                    case "link":
+                        const url = prompt("Enter URL:");
+                        if (url) {
+                            document.execCommand("createLink", false, url);
+                        }
+                        break;
+                }
+
+                document.getElementById("mdEditor").focus();
+            }
+
+            // Conversion functions
+            function markdownToHtml(markdown) {
+                return markdown
+                    .replace(/^### (.*)/gm, "<h3>$1</h3>")
+                    .replace(/^## (.*)/gm, "<h2>$1</h2>")
+                    .replace(/^# (.*)/gm, "<h1>$1</h1>")
+                    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+                    .replace(/~~(.*?)~~/g, "<del>$1</del>")
+                    .replace(/`(.*?)`/g, "<code>$1</code>")
+                    .replace(/^\> (.*)/gm, "<blockquote>$1</blockquote>")
+                    .replace(/^\* (.*)/gm, "<li>$1</li>")
+                    .replace(/(<li>.*<\/li>)/s, "<ul>$1</ul>")
+                    .replace(/^\d+\. (.*)/gm, "<li>$1</li>")
+                    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+                    .replace(/\n/g, "<br>");
+            }
+
+            function htmlToMarkdown(html) {
+                return html
+                    .replace(/<h1>(.*?)<\/h1>/g, "# $1")
+                    .replace(/<h2>(.*?)<\/h2>/g, "## $1")
+                    .replace(/<h3>(.*?)<\/h3>/g, "### $1")
+                    .replace(/<strong>(.*?)<\/strong>/g, "**$1**")
+                    .replace(/<b>(.*?)<\/b>/g, "**$1**")
+                    .replace(/<em>(.*?)<\/em>/g, "*$1*")
+                    .replace(/<i>(.*?)<\/i>/g, "*$1*")
+                    .replace(/<del>(.*?)<\/del>/g, "~~$1~~")
+                    .replace(/<code>(.*?)<\/code>/g, "`$1`")
+                    .replace(/<blockquote>(.*?)<\/blockquote>/g, "> $1")
+                    .replace(
+                        /<ul><li>(.*?)<\/li><\/ul>/gs,
+                        (match, content) => {
+                            return content
+                                .split("</li><li>")
+                                .map((item) => `* ${item}`)
+                                .join("\n");
+                        },
+                    )
+                    .replace(/<a href="([^"]*)">(.*?)<\/a>/g, "[$2]($1)")
+                    .replace(/<br>/g, "\n")
+                    .replace(/<[^>]*>/g, "");
+            }
+
+            function updateStatus(message) {
+                document.getElementById("status").textContent = message;
+                setTimeout(() => {
+                    document.getElementById("status").textContent = "Ready";
+                }, 3000);
+            }
+
+            // Keyboard shortcuts
+            document.addEventListener("keydown", (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    switch (e.key) {
+                        case "o":
+                            e.preventDefault();
+                            openFile();
+                            break;
+                        case "s":
+                            e.preventDefault();
+                            saveFile();
+                            break;
+                    }
+                }
+            });
+        </script>
+    </body>
+</html>
